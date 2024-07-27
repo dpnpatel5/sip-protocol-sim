@@ -56,7 +56,7 @@ void SIPServer::handle_request(const std::string& raw_message, const struct sock
     } else if (message.method == "BYE") {
         send_response("SIP/2.0 200 OK\r\nContent-Length: 0\r\n\r\n", client_addr);
     } else if (message.method == "REGISTER") {
-        response = "SIP/2.0 200 OK\r\nContact: <sip:server@domain.com>\r\nExpires: 3600\r\nContent-Length: 0\r\n\r\n";
+        send_response("SIP/2.0 200 OK\r\nContact: <sip:server@domain.com>\r\nExpires: 3600\r\nContent-Length: 0\r\n\r\n",client_addr);
     } else {
         send_response("SIP/2.0 405 Method Not Allowed\r\nContent-Length: 0\r\n\r\n", client_addr);
     }
