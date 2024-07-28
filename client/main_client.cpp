@@ -1,11 +1,25 @@
 #include "SIPClient.h"
 #include <iostream>
-#include <limits>
+#include <cstdlib>
 
-int main() {
-    // Server IP and port
-    std::string server_ip = "127.0.0.1"; // Localhost or server IP
-    int server_port = 5060; // SIP port
+int main(int argc, char* argv[]) {
+    if (argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " <Server IP> <Server Port>" << std::endl;
+        return 1;
+    }
+
+    std::string server_ip = argv[1];
+    int server_port;
+
+    try {
+        server_port = std::stoi(argv[2]);
+    } catch (const std::invalid_argument& e) {
+        std::cerr << "Invalid port number. Port must be an integer." << std::endl;
+        return 1;
+    } catch (const std::out_of_range& e) {
+        std::cerr << "Port number out of range." << std::endl;
+        return 1;
+    }
 
     // Create SIP client
     SIPClient client(server_ip, server_port);

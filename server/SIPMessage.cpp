@@ -1,44 +1,69 @@
 #include "SIPMessage.h"
 #include <sstream>
+#include <algorithm>
+#include <cctype>
 
-void SIPMessage::parse(const std::string& raw_message) {
-    size_t method_end = raw_message.find(' ');
-    method = raw_message.substr(0, method_end);
-
-    size_t uri_start = method_end + 1;
-    size_t uri_end = raw_message.find(' ', uri_start);
-    uri = raw_message.substr(uri_start, uri_end - uri_start);
-
-    size_t headers_start = raw_message.find("\r\n") + 2;
-    size_t body_start = raw_message.find("\r\n\r\n") + 4;
-    body = raw_message.substr(body_start);
-
-    parse_headers(raw_message.substr(headers_start, body_start - headers_start - 4));
+SIPMessage::SIPMessage(const std::string& raw_message) {
+    parse_message(raw_message);
 }
 
-void SIPMessage::parse_headers(const std::string& header_section) {
-    size_t pos = 0;
-    while (pos < header_section.length()) {
-        size_t header_end = header_section.find("\r\n", pos);
-        if (header_end == std::string::npos) break;
+void SIPMessage::parse_message(const std::string& raw_message) {
+    std::istringstream stream(raw_message);
+    std::string line;
+    bool headers_done = false;
 
-        std::string header_line = header_section.substr(pos, header_end - pos);
-        size_t colon_pos = header_line.find(':');
-        if (colon_pos != std::string::npos) {
-            std::string header_name = header_line.substr(0, colon_pos);
-            std::string header_value = header_line.substr(colon_pos + 2);
-            headers[header_name] = header_value;
+    while (std::getline(stream, line)) {
+        // Check for empty line indicating end of headers
+        if (line.empty()) {
+            headers_done = true;
+            continue;
         }
-        pos = header_end + 2;
+
+        if (!headers_done) {
+            // Parse headers
+            size_t colon_pos = line.find("sip");
+            if (colon_pos != std::string::npos) {
+                std::string header_name = line.substr(0, colon_pos);
+                std::string header_value = line.substr(colon_pos + 1);
+                // Trim header_value
+                header_value.erase(header_value.find_last_not_of(" \t\r\n") + 1);
+                // Convert header_name to lowercase
+                //std::transform(header_name.begin(), header_name.end(), header_name.begin(), ::tolower);
+                headers[header_name] = header_value;
+
+                if (method.empty()) {
+                    // Assuming the method is in the first line of the message
+                    method = header_name;
+                }
+            }
+        } else {
+            // Parse body
+            body += line + "\n";
+        }
+    }
+
+    // Remove the trailing newline character from the body
+    if (!body.empty()) {
+        body.pop_back();
     }
 }
 
-std::string SIPMessage::to_string() const {
-    std::string result = method + " " + uri + " SIP/2.0\r\n";
-    for (const auto& header : headers) {
-        result += header.first + ": " + header.second + "\r\n";
-    }
-    result += "\r\n" + body;
-    return result;
+std::string SIPMessage::get_method() const {
+    return method;
+}
+
+std::string SIPMessage::get_header(const std::string& header_name) const {
+    std::string header_name_lower = header_name;
+    std::transform(header_name_lower.begin(), header_name_lower.end(), header_name_lower.begin(), ::tolower);
+    auto it = headers.find(header_name_lower);
+    return (it != headers.end()) ? it->second : "";
+}
+
+std::string SIPMessage::get_body() const {
+    return body;
+}
+
+std::map<std::string, std::string> SIPMessage::get_all_headers() const {
+    return headers;
 }
 
