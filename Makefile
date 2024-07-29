@@ -1,7 +1,7 @@
 # Define the compiler and flags
 CXX = g++
 CXXFLAGS = -Wall -Wextra -O2
-LDFLAGS =  -losip2 -losipparser2
+LDFLAGS =  -losipparser2 -losip2
 
 # Define the directories for source files and output binaries
 SERVER_SRC_DIR = ./server
@@ -22,7 +22,8 @@ all: $(SERVER_BIN) $(CLIENT_BIN)
 # Rule to build the server
 $(SERVER_BIN): $(SERVER_SRC)
 	@mkdir -p $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) -o $(SERVER_BIN) $(SERVER_SRC)
+	$(CXX) $(CXXFLAGS) -o $(SERVER_BIN) $(SERVER_SRC) $(LDFLAGS)
+
 
 # Rule to build the client
 $(CLIENT_BIN): $(CLIENT_SRC)
